@@ -15,10 +15,15 @@ it produces is never downloaded as a finished binary and never picks up the
 
 Requires `python@3.12` (installed automatically as a dependency).
 
-After install:
+After install, launch it with `sud-workbench`, or open it from **/Applications** — the
+Formula symlinks it there automatically (skipped, not failed, if something's already at
+that path).
+
+Uninstalling with `brew uninstall sud-workbench` removes everything Homebrew tracks — the
+build, the venv, the `sud-workbench` command — but Formulae have no hook for cleaning up
+files placed *outside* Homebrew's own prefix (that's Cask-only), so the /Applications
+symlink is left behind, now pointing at nothing. Remove it yourself if you want it gone:
 
 ```sh
-sud-workbench                                  # launch it
-# or, to make it feel like a normal app:
-ln -s "$(brew --prefix)/opt/sud-workbench/dist/SUD Workbench.app" /Applications/
+rm "/Applications/SUD Workbench.app"
 ```

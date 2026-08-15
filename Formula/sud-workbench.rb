@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class SudWorkbench < Formula
   desc "Native-feeling desktop app for viewing and editing SUD dependency treebanks"
   homepage "https://github.com/skalyan91/sud-workbench"
@@ -26,8 +28,8 @@ class SudWorkbench < Formula
   # appearance instead. See this project's own README ("the window's
   # corners are not fully rounded") for the same diagnosis, arrived at
   # independently of this formula.
-  depends_on "python@3.12"
   depends_on :macos
+  depends_on "python@3.12"
 
   def install
     # Copy the source tree into this formula's OWN permanent prefix before building,
@@ -36,7 +38,7 @@ class SudWorkbench < Formula
     # that path has to already be the install's final resting place.
     prefix.install Dir["*"]
 
-    py312 = Formula["python@3.12"].opt_bin/"python3.12"
+    py312 = formula_opt_bin("python@3.12")/"python3.12"
     cd prefix do
       system py312, "-m", "venv", ".venv"
       system ".venv/bin/pip", "install", "--upgrade", "pip"
@@ -58,6 +60,24 @@ class SudWorkbench < Formula
       exec "#{launcher}" "$@"
     SH
     (bin/"sud-workbench").chmod 0755
+
+    # Convenience symlink into /Applications, on request ("isn't there a brew command
+    # that'll drop the app bundle directly into Applications?"). Formulae have no
+    # built-in mechanism for this -- that's specifically what Casks do, and this can't
+    # BE a Cask (see this file's header). Points at opt_prefix (Homebrew's own stable,
+    # upgrade-surviving pointer, not the raw versioned Cellar path a new version would
+    # orphan), and only created if nothing already occupies that exact spot -- never
+    # clobber a manual install or something else's own use of the name.
+    applications = Pathname.new("/Applications")
+    target = applications/"SUD Workbench.app"
+    return if target.exist? || target.symlink?
+
+    begin
+      ln_s(opt_prefix/"dist/SUD Workbench.app", target)
+    rescue => e
+      opoo "Couldn't symlink into /Applications (#{e.message}). Run manually:\n  " \
+           "ln -s \"#{opt_prefix}/dist/SUD Workbench.app\" /Applications/"
+    end
   end
 
   def caveats
@@ -65,8 +85,15 @@ class SudWorkbench < Formula
       SUD Workbench was built from source and installed to:
         #{opt_prefix}/dist/SUD Workbench.app
 
-      Launch it with `sud-workbench`, or make it feel like a normal app:
-        ln -s "#{opt_prefix}/dist/SUD Workbench.app" /Applications/
+      Launch it with `sud-workbench`, or from /Applications (a symlink is placed there
+      automatically, unless something already occupies that path).
+
+      Uninstalling: `brew uninstall sud-workbench` removes everything Homebrew tracks --
+      the build, the venv, the `sud-workbench` command -- but Formulae have no hook for
+      cleaning up files placed OUTSIDE Homebrew's own prefix (that's a Cask-only
+      capability), so the /Applications symlink above is left behind, now pointing at
+      nothing. Remove it yourself if you want it gone:
+        rm "/Applications/SUD Workbench.app"
 
       Optional: UD <-> SUD/mSUD format conversion needs grew's OCaml backend
       (not installed by this formula -- the app runs fine without it, with
@@ -82,8 +109,8 @@ class SudWorkbench < Formula
       system prefix/".venv/bin/python", "-c",
              "import app; assert app.__version__ == '#{version}', app.__version__"
     end
-    assert_predicate prefix/"dist/SUD Workbench.app/Contents/MacOS/SUD Workbench", :exist?
-    assert_predicate bin/"sud-workbench", :exist?
+    assert_path_exists prefix/"dist/SUD Workbench.app/Contents/MacOS/SUD Workbench"
+    assert_path_exists bin/"sud-workbench"
     plist = (prefix/"dist/SUD Workbench.app/Contents/Info.plist").read
     assert_match "<string>#{version}</string>", plist
   end
