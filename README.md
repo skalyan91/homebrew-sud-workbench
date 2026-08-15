@@ -15,15 +15,16 @@ it produces is never downloaded as a finished binary and never picks up the
 
 Requires `python@3.12` (installed automatically as a dependency).
 
-After install, launch it with `sud-workbench`, or open it from **/Applications** — the
-Formula symlinks it there automatically (skipped, not failed, if something's already at
-that path).
-
-Uninstalling with `brew uninstall sud-workbench` removes everything Homebrew tracks — the
-build, the venv, the `sud-workbench` command — but Formulae have no hook for cleaning up
-files placed *outside* Homebrew's own prefix (that's Cask-only), so the /Applications
-symlink is left behind, now pointing at nothing. Remove it yourself if you want it gone:
+After install:
 
 ```sh
-rm "/Applications/SUD Workbench.app"
+sud-workbench                                  # launch it
+# or, to make it feel like a normal app:
+ln -s "$(brew --prefix)/opt/sud-workbench/dist/SUD Workbench.app" /Applications/
 ```
+
+A Formula can't do that symlink for you automatically — tried it, in both `install` and
+`post_install`; Homebrew's own build sandbox refuses writes outside the Cellar in either
+one. That's exactly the boundary Casks exist to cross and Formulae can't, and this has to
+be a Formula (see above: an unsigned, unnotarized app distributed as a pre-built Cask
+binary gets Gatekeeper-quarantined; building from source doesn't).

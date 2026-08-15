@@ -62,44 +62,21 @@ class SudWorkbench < Formula
     (bin/"sud-workbench").chmod 0755
   end
 
-  # Convenience symlink into /Applications, on request ("isn't there a brew command that'll
-  # drop the app bundle directly into Applications?"). Formulae have no built-in mechanism
-  # for this -- that's specifically what Casks do, and this can't BE a Cask (see this file's
-  # header). MUST live in post_install, not install: a real end-to-end `brew install` on
-  # this machine proved install's own build sandbox refuses writes outside the Cellar
-  # ("Operation not permitted @ rb_file_s_symlink") -- not a guess, the first version of
-  # this method sat in install and failed exactly that way. post_install runs after the
-  # keg is finalized and isn't confined to the same sandbox. Points at opt_prefix
-  # (Homebrew's own stable, upgrade-surviving pointer, not the raw versioned Cellar path a
-  # new version would orphan), and only created if nothing already occupies that exact
-  # spot -- never clobber a manual install or something else's own use of the name.
-  def post_install
-    applications = Pathname.new("/Applications")
-    target = applications/"SUD Workbench.app"
-    return if target.exist? || target.symlink?
-
-    begin
-      ln_s(opt_prefix/"dist/SUD Workbench.app", target)
-    rescue => e
-      opoo "Couldn't symlink into /Applications (#{e.message}). Run manually:\n  " \
-           "ln -s \"#{opt_prefix}/dist/SUD Workbench.app\" /Applications/"
-    end
-  end
-
   def caveats
     <<~EOS
       SUD Workbench was built from source and installed to:
         #{opt_prefix}/dist/SUD Workbench.app
 
-      Launch it with `sud-workbench`, or from /Applications (a symlink is placed there
-      automatically, unless something already occupies that path).
+      Launch it with `sud-workbench`, or make it feel like a normal app:
+        ln -s "#{opt_prefix}/dist/SUD Workbench.app" /Applications/
 
-      Uninstalling: `brew uninstall sud-workbench` removes everything Homebrew tracks --
-      the build, the venv, the `sud-workbench` command -- but Formulae have no hook for
-      cleaning up files placed OUTSIDE Homebrew's own prefix (that's a Cask-only
-      capability), so the /Applications symlink above is left behind, now pointing at
-      nothing. Remove it yourself if you want it gone:
-        rm "/Applications/SUD Workbench.app"
+      A Formula can't do that symlink FOR you at install time ("isn't there a brew
+      command that'll drop the app bundle directly into Applications?" -- no: tried it,
+      twice, in both install and post_install; Homebrew's own build sandbox refuses
+      writes outside the Cellar in both -- "Operation not permitted @ rb_file_s_symlink"
+      against /Applications, a real failure on a real install, not a guess). That's
+      exactly the boundary Casks exist to cross and Formulae can't -- see this file's
+      own header for why this has to be a Formula instead.
 
       Optional: UD <-> SUD/mSUD format conversion needs grew's OCaml backend
       (not installed by this formula -- the app runs fine without it, with
