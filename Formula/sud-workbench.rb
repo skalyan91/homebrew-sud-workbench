@@ -60,14 +60,20 @@ class SudWorkbench < Formula
       exec "#{launcher}" "$@"
     SH
     (bin/"sud-workbench").chmod 0755
+  end
 
-    # Convenience symlink into /Applications, on request ("isn't there a brew command
-    # that'll drop the app bundle directly into Applications?"). Formulae have no
-    # built-in mechanism for this -- that's specifically what Casks do, and this can't
-    # BE a Cask (see this file's header). Points at opt_prefix (Homebrew's own stable,
-    # upgrade-surviving pointer, not the raw versioned Cellar path a new version would
-    # orphan), and only created if nothing already occupies that exact spot -- never
-    # clobber a manual install or something else's own use of the name.
+  # Convenience symlink into /Applications, on request ("isn't there a brew command that'll
+  # drop the app bundle directly into Applications?"). Formulae have no built-in mechanism
+  # for this -- that's specifically what Casks do, and this can't BE a Cask (see this file's
+  # header). MUST live in post_install, not install: a real end-to-end `brew install` on
+  # this machine proved install's own build sandbox refuses writes outside the Cellar
+  # ("Operation not permitted @ rb_file_s_symlink") -- not a guess, the first version of
+  # this method sat in install and failed exactly that way. post_install runs after the
+  # keg is finalized and isn't confined to the same sandbox. Points at opt_prefix
+  # (Homebrew's own stable, upgrade-surviving pointer, not the raw versioned Cellar path a
+  # new version would orphan), and only created if nothing already occupies that exact
+  # spot -- never clobber a manual install or something else's own use of the name.
+  def post_install
     applications = Pathname.new("/Applications")
     target = applications/"SUD Workbench.app"
     return if target.exist? || target.symlink?
