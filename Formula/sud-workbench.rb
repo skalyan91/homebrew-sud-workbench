@@ -57,7 +57,12 @@ class SudWorkbench < Formula
     # above never touches -- closes it at the source, the same way the other four channels already
     # do (see packaging/make_bootstrap_app.sh's own strip_dev_fixture, sud-workbench.git).
     rm_f prefix/"web/js/dev-fixture.js"
-    system "sed", "-i", "", "-e", "/browser design mode only: seeds DOC/,+1d", (prefix/"web/index.html").to_s
+    # TWO separate -e clauses, matching packaging/make_bootstrap_app.sh's own strip_dev_fixture
+    # exactly: the first deletes the 2-line HTML comment above the tag (a `,+1d` RANGE, so it
+    # covers only the comment, not the tag below it); the second deletes the <script> tag itself,
+    # matched independently since it is a separate line the first clause's range does not reach.
+    system "sed", "-i", "", "-e", "/browser design mode only: seeds DOC/,+1d",
+           "-e", "\\|js/dev-fixture\\.js|d", (prefix/"web/index.html").to_s
     odie "dev-fixture.js survived the strip" if (prefix/"web/index.html").read.include?("dev-fixture")
     # samples/ is repo-only test data every other channel already excludes too -- nothing in app/
     # or web/ reads from it at runtime (confirmed: the fixture above was the actual source of the
