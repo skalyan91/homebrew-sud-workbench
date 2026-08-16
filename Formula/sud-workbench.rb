@@ -38,6 +38,32 @@ class SudWorkbench < Formula
     # that path has to already be the install's final resting place.
     prefix.install Dir["*"]
 
+    # ⚠ STRIP THE BROWSER DEV-FIXTURE (AND SAMPLE DATA) FROM THIS COPY, on report ("Why does the
+    # app always show the English sample file on startup? I thought we'd removed sample files
+    # from the build!" -- true for every OTHER channel). packaging/make_bootstrap_app.sh (macOS),
+    # make_deb.sh and make_win_app.py all stage a COPY of the source and strip web/js/dev-fixture.js
+    # from it before building; packaging/make_app.sh -- the one THIS formula calls -- never got the
+    # same treatment, because it's a thin launcher that just `cd`s into whatever tree it's handed
+    # and runs `python -m app` from there. It was written as a developer's own local-checkout
+    # convenience, never as a shipped-artifact builder, so it stages nothing of its own to strip.
+    # dev-fixture.js seeds DOC with its own (mostly English) sentences whenever `!hasBridge()` --
+    # and hasBridge() genuinely IS false for a brief window on every single launch, native app
+    # included: the real bridge attaches asynchronously (web/index.html waits on the
+    # `pywebviewready` event before loading the real document), so the fixture's synchronous,
+    # first-paint render fires and shows before the real last-opened document replaces it a moment
+    # later. That reads as "the app always shows the English file", even though nothing is actually
+    # wrong with which document the app is opening. Deleting the file here -- from this Formula's
+    # OWN disposable copy, never the developer's live checkout, which `prefix.install Dir["*"]`
+    # above never touches -- closes it at the source, the same way the other four channels already
+    # do (see packaging/make_bootstrap_app.sh's own strip_dev_fixture, sud-workbench.git).
+    rm_f prefix/"web/js/dev-fixture.js"
+    system "sed", "-i", "", "-e", "/browser design mode only: seeds DOC/,+1d", (prefix/"web/index.html").to_s
+    odie "dev-fixture.js survived the strip" if (prefix/"web/index.html").read.include?("dev-fixture")
+    # samples/ is repo-only test data every other channel already excludes too -- nothing in app/
+    # or web/ reads from it at runtime (confirmed: the fixture above was the actual source of the
+    # English content, not this directory), so dropping it is for parity, not part of the fix itself.
+    rm_rf prefix/"samples"
+
     py312 = formula_opt_bin("python@3.12")/"python3.12"
     cd prefix do
       system py312, "-m", "venv", ".venv"
