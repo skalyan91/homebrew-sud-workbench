@@ -3,8 +3,8 @@
 class SudWorkbench < Formula
   desc "Native-feeling desktop app for viewing and editing SUD dependency treebanks"
   homepage "https://github.com/skalyan91/sud-workbench"
-  url "https://github.com/skalyan91/sud-workbench/archive/refs/tags/v0.3.9.tar.gz"
-  sha256 "76cea3a9979f295fb951b34fbf3c2f28d765a2a160c121a3dc9423e4f501d271"
+  url "https://github.com/skalyan91/sud-workbench/archive/refs/tags/v0.3.10.tar.gz"
+  sha256 "98f808053b896ccd5a8898ba5ff0efe99243918a57f7ad7ed864f326cc3a87d4"
   license "MIT"
 
   # This is a Formula, not a Cask, ON PURPOSE: SUD Workbench is not signed or
