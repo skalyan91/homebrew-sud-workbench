@@ -6,6 +6,14 @@ class SudWorkbench < Formula
   url "https://github.com/skalyan91/sud-workbench/archive/refs/tags/v0.3.22.tar.gz"
   sha256 "fff6216fefa5a9d87827391132aba5c3ff1627736a1ec025ac862bf2f619071b"
   license "MIT"
+  # NO app release behind this bump -- v0.3.22's own source is unchanged, only how this Formula
+  # builds it. Without it, `brew upgrade` (which compares version strings, not formula content)
+  # would see every already-on-0.3.22 installer as already up to date and never re-run `install`
+  # to pick up the chrome-kit resource below -- only a fresh `install`/`reinstall` would happen to
+  # get it. `bump-homebrew-tap.yml` resets this to 0 on the next real release, the same way it
+  # already rewrites url/sha256 -- a REVISION belongs to the app version it was cut against, not to
+  # whatever the Formula's manual state happened to be beforehand.
+  revision 1
 
   # This is a Formula, not a Cask, ON PURPOSE: SUD Workbench is not signed or
   # notarized, and a Cask would distribute a prebuilt, quarantined binary that
