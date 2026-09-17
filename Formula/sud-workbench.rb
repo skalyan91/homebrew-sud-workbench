@@ -31,6 +31,21 @@ class SudWorkbench < Formula
   depends_on :macos
   depends_on "python@3.12"
 
+  # web/chrome-kit IS THE WINDOW CHROME (see sud-workbench's own CLAUDE.md) AND IS A GIT
+  # SUBMODULE — a commit pointer in the parent repo's tree, not real files — so the `url`
+  # tarball above, GitHub's auto-generated archive of a single commit, does not and cannot
+  # contain it (confirmed: extracting that tarball leaves web/chrome-kit/ EMPTY). The app
+  # still builds and launches with it missing, silently, with no window chrome at all — no
+  # macOS/Windows CSS, no menubar/platform JS — which is what "the shipped app has broken
+  # CSS" turned out to be. Fetched here as a SECOND resource, pinned to the exact commit
+  # `git ls-tree v0.3.22 -- web/chrome-kit` names for this release; `bump-homebrew-tap.yml`
+  # (sud-workbench.git) re-resolves this pin from each new tag's own submodule pointer, the
+  # same way it already re-resolves the URL/sha256 pair above.
+  resource "chrome-kit" do
+    url "https://github.com/skalyan91/pywebview-chrome-kit/archive/959c85f2f8e37d3117ae978233e1bf10de8ec451.tar.gz"
+    sha256 "5e5317745baf0a86fbe98831bfc8be339b94cffe9d2d1caabbc249ea9d20c6ba"
+  end
+
   def install
     # Copy the source tree into this formula's OWN permanent prefix before building,
     # rather than building in Homebrew's transient buildpath: packaging/make_app.sh
@@ -57,6 +72,15 @@ class SudWorkbench < Formula
     # above never touches -- closes it at the source, the same way the other four channels already
     # do (see packaging/make_bootstrap_app.sh's own strip_dev_fixture, sud-workbench.git).
     rm_f prefix/"web/js/dev-fixture.js"
+
+    # FILL IN THE SUBMODULE THE TARBALL ABOVE COULDN'T CARRY. `Resource#stage(target)` strips the
+    # archive's one leading "pywebview-chrome-kit-<sha>/" directory, landing macos-kit/, win11-kit/,
+    # chrome-shared/, adwaita-kit/ and js/{platform,menubar}.js straight into `target` — checked
+    # against a real `brew install --build-from-source` of a throwaway formula that did nothing but
+    # this stage call, not assumed from the main resource's own (different) extraction path.
+    # `web/chrome-kit/` already exists here, empty, from the main tarball above; this fills it —
+    # `packaging/make_app.sh` below reads both.
+    resource("chrome-kit").stage(prefix/"web/chrome-kit")
     # TWO separate -e clauses, matching packaging/make_bootstrap_app.sh's own strip_dev_fixture
     # exactly: the first deletes the 2-line HTML comment above the tag (a `,+1d` RANGE, so it
     # covers only the comment, not the tag below it); the second deletes the <script> tag itself,
@@ -127,5 +151,9 @@ class SudWorkbench < Formula
     assert_path_exists bin/"sud-workbench"
     plist = (prefix/"dist/SUD Workbench.app/Contents/Info.plist").read
     assert_match "<string>#{version}</string>", plist
+    # Regression guard for the chrome-kit resource above: this is exactly what a broken pin, a
+    # renamed archive layout, or the resource silently failing to stage would leave missing, and
+    # is what actually shipped once (v0.3.22's first build) with no test here to catch it.
+    assert_path_exists prefix/"web/chrome-kit/macos-kit/mac-chrome.css"
   end
 end
