@@ -3,17 +3,9 @@
 class SudWorkbench < Formula
   desc "Native-feeling desktop app for viewing and editing SUD dependency treebanks"
   homepage "https://github.com/skalyan91/sud-workbench"
-  url "https://github.com/skalyan91/sud-workbench/archive/refs/tags/v0.3.22.tar.gz"
-  sha256 "fff6216fefa5a9d87827391132aba5c3ff1627736a1ec025ac862bf2f619071b"
+  url "https://github.com/skalyan91/sud-workbench/archive/refs/tags/v0.3.23.tar.gz"
+  sha256 "9a6a7205cc5cc1d55362b3f39f01c2fcca4462ac46eaa6f0b9ce6b5e20f35b45"
   license "MIT"
-  # NO app release behind this bump -- v0.3.22's own source is unchanged, only how this Formula
-  # builds it. Without it, `brew upgrade` (which compares version strings, not formula content)
-  # would see every already-on-0.3.22 installer as already up to date and never re-run `install`
-  # to pick up the chrome-kit resource below -- only a fresh `install`/`reinstall` would happen to
-  # get it. `bump-homebrew-tap.yml` resets this to 0 on the next real release, the same way it
-  # already rewrites url/sha256 -- a REVISION belongs to the app version it was cut against, not to
-  # whatever the Formula's manual state happened to be beforehand.
-  revision 1
 
   # This is a Formula, not a Cask, ON PURPOSE: SUD Workbench is not signed or
   # notarized, and a Cask would distribute a prebuilt, quarantined binary that
@@ -50,8 +42,8 @@ class SudWorkbench < Formula
   # (sud-workbench.git) re-resolves this pin from each new tag's own submodule pointer, the
   # same way it already re-resolves the URL/sha256 pair above.
   resource "chrome-kit" do
-    url "https://github.com/skalyan91/pywebview-chrome-kit/archive/959c85f2f8e37d3117ae978233e1bf10de8ec451.tar.gz"
-    sha256 "5e5317745baf0a86fbe98831bfc8be339b94cffe9d2d1caabbc249ea9d20c6ba"
+    url "https://github.com/skalyan91/pywebview-chrome-kit/archive/4048fafb859e072ba49029c3384fb078f257fe9f.tar.gz"
+    sha256 "b6dd2b786831e62d963bd2d965393f3c05a1a30cad869759efc5caca54e0b906"
   end
 
   def install
